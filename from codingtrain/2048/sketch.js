@@ -1,28 +1,38 @@
+const height = 400
+const width = 400
+const wildNode = ['W','i',"L","D"]
 let grid = [
   [0,0,0,0],
   [0,0,0,0],
   [0,0,0,0],
   [0,0,0,0]
 ]
+let playground
+let score = 0
+let wildCount = 0
 
 function setup() {
   // put setup code here
-  let cvs = createCanvas(400,400)
-  cvs.position((windowWidth/2)-width*0.5,(windowHeight/2)-height*0.5)
+  let cvs = createCanvas(480,720)
+  playground = createGraphics(400,400).show()
+  cvs.position((windowWidth/2)-480*0.5,(windowHeight/2)-720*0.5)
+  playground.position((windowWidth/2)-width*0.5,(windowHeight/2)-height*0.5)
 
-  grid = addNumber(grid)
-  grid = addNumber(grid)
+  addNumber()
+  addNumber()
 
 }
 
 function draw() {
   // put drawing code here
-  strokeWeight(2)
-  background(255)
-  stroke(1)
+  playground.strokeWeight(2)
+  background('rgb(0,255,0)')
+  stroke(0)
   // draw the playground
+  playground.background(255)
   drawGrid()
   displayNumb(grid);
+  displayScore(score)
 }
 
 
@@ -31,8 +41,8 @@ function draw() {
 function drawGrid() {
   for (let i = 0; i < 4; i++) {
     for (let j = 0; j < 4; j++) {
-      noFill()
-      rect(i*(width/4),j*(height/4),width/4,height/4)
+      playground.noFill()
+      playground.rect(i*(width/4),j*(height/4),width/4,height/4)
     }
   }
 }
@@ -41,18 +51,23 @@ function drawGrid() {
 function displayNumb(grid){
   for (let i = 0; i < 4; i++) {
     for (let j = 0; j < 4; j++) {
-      fill(0)
-      textSize(32)
-      strokeWeight(1)
-      textAlign(CENTER,CENTER)
-      text(grid[j][i] ,i*(width/4)+50,j*(width/4)+50)
+      playground.fill(0)
+      playground.textSize(32)
+      playground.strokeWeight(1)
+      playground.textAlign(CENTER,CENTER)
+      playground.text(grid[j][i] ,i*(width/4)+50,j*(width/4)+50)
     }
   }
 }
+// ? display score
+function displayScore(score){
+  textSize(28)
+  textAlign(RIGHT,CENTER)
+  text(score,(480/2+(width*0.5)-10),(720/2-(height*0.5)-20))
+}
 
 // ? add number to board
-function addNumber(grid) {
-  let option = {x:0,y:0}
+function addNumber() {
   let gridTmp = []
   // * lihat dan tampung jumlah column dari grid yang masih kosong
   for (let x = 0; x < grid.length; x++) {
@@ -64,15 +79,18 @@ function addNumber(grid) {
   }
   if (gridTmp.length != 0) {
     let tmp = random(gridTmp)
-    option.x = tmp.x
-    option.y = tmp.y
-    grid[option.x][option.y] = random(1) > 0.5 ? 4 : 2 ;
+    if (wildCount == 8) {
+      grid[tmp.x][tmp.y] = random(wildNode)
+      wildCount = 0
+    }else{
+      grid[tmp.x][tmp.y] = random(1) > 0.5 ? 4 : 2
+    }
     return grid
   }
   return grid
 }
 
-// ? sum same number
+// ? sum the same number
 function sumNumber(grid,direction) {
 
 switch (direction) {
@@ -80,9 +98,22 @@ switch (direction) {
     for (let i = 3; i >= 0; i--) {
       for (let j = 3; j >= 0; j--) {
         // * cek apakah sama
-        if (grid[i][j] == grid[i][j-1]) {
+        if(isNaN(grid[i][j-1]) || isNaN(grid[i][j])){
+          if (wildNode.includes(grid[i][j-1]) && grid[i][j] != 0) {
+            grid[i][j] = grid[i][j] * 2
+            grid[i][j-1] = 0
+            addScore(grid[i][j])
+          }
+          else if (wildNode.includes(grid[i][j]) && grid[i][j-1] != 0) {
+            grid[i][j-1] = grid[i][j-1] * 2
+            grid[i][j] = 0
+            addScore(grid[i][j-1])
+          }
+        }
+        else if(grid[i][j] == grid[i][j-1]) {
           grid[i][j] = grid[i][j] + grid[i][j-1]
           grid[i][j-1] = 0
+          addScore(grid[i][j])
         }
       }
     }
@@ -95,6 +126,7 @@ switch (direction) {
         if (grid[i][j] == grid[i][j+1]) {
           grid[i][j] = grid[i][j] + grid[i][j+1]
           grid[i][j+1] = 0
+          addScore(grid[i][j])
         }
       }
     }
@@ -107,6 +139,7 @@ switch (direction) {
             if (j != 0 && grid[j][i] == grid[j-1][i]) {
               grid[j][i] = grid[j][i] + grid[j-1][i]
               grid[j-1][i] = 0
+              addScore(grid[j][i])
             }
           }
         }
@@ -119,13 +152,14 @@ switch (direction) {
             if (j != 3 && grid[j][i] == grid[j+1][i]) {
               grid[j][i] = grid[j][i] + grid[j+1][i]
               grid[j+1][i] = 0
+              addScore(grid[j][i])
             }
           }
         }
       break;
 
   default:
-    alert('error : the second parameter must be horizon | up | down')
+    alert('error : the second parameter must be left | right | up | down')
     break;
 }
 }
@@ -139,9 +173,20 @@ function doSlide(row,direction = 'left') {
 }
 
 // ? cek perubahan grid
-function checkCange(grid,gridClone) {
-  return JSON.stringify(grid) == JSON.stringify(gridClone) ? false : true
-    
+function checkCange(gridClone) {
+  if(JSON.stringify(grid) == JSON.stringify(gridClone) ) {
+    return false;
+  }
+  else{
+    wildCount +=1
+    addNumber()
+    return false;
+  }
+}
+
+// ? add score
+function addScore(newScore) {
+  score += newScore
 }
 
 // TODO: key pressed
@@ -169,7 +214,7 @@ function keyPressed() {
     for (let i = 0; i < 4; i++) {
       grid[i] = doSlide(grid[i])
     }
-    checkCange(grid,gridClone) ? addNumber(grid) : console.log('nothing change');
+    return checkCange(gridClone)
   }
 
   // * arrow kiri
@@ -181,7 +226,7 @@ function keyPressed() {
     for (let i = 0; i < 4; i++) {
       grid[i] = doSlide(grid[i],'!kiri')
     }
-    checkCange(grid,gridClone) ? addNumber(grid) : console.log('nothing change');
+    return checkCange(gridClone)
   }
 
   // * arrow bawah
@@ -231,7 +276,7 @@ function keyPressed() {
         grid[j][i] = gridTmp[i][j]
       }
     }
-    checkCange(grid,gridClone) ? addNumber(grid) : console.log('nothing change');
+    return checkCange(gridClone)
   }
 
   // * arrow atas
@@ -282,8 +327,7 @@ function keyPressed() {
         grid[j][i] = gridTmp[i][j]
       }
     }
-    checkCange(grid,gridClone) ? addNumber(grid) : console.log('nothing change');
-     //do nothing
+    return checkCange(gridClone)
   }
   // return false
 }
