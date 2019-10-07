@@ -117,7 +117,6 @@ switch (direction) {
           for (let j = 0; j <= 3; j++) { //index lv.2
             // * cek apakah sama
             if (j != 3 && grid[j][i] == grid[j+1][i]) {
-              console.log('lol')
               grid[j][i] = grid[j][i] + grid[j+1][i]
               grid[j+1][i] = 0
             }
@@ -139,11 +138,27 @@ function doSlide(row,direction = 'left') {
   return direction == 'left' ? arr = zeros.concat(arr) : arr = arr.concat(zeros)
 }
 
+// ? cek perubahan grid
+function checkCange(grid,gridClone) {
+  return JSON.stringify(grid) == JSON.stringify(gridClone) ? false : true
+    
+}
 
 // TODO: key pressed
 // ? when key is pressed
 function keyPressed() {
-  let gridClone = [...grid]
+  
+  let gridClone = [
+    [0,0,0,0],
+    [0,0,0,0],
+    [0,0,0,0],
+    [0,0,0,0]
+  ]
+  for (let i = 0; i < grid.length; i++) {
+    for (let j = 0; j < grid[i].length; j++) {
+      gridClone[i][j] = grid[i][j];
+    }
+  }
 
   // * arrow kanan
   if (keyCode == RIGHT_ARROW ) {
@@ -154,7 +169,7 @@ function keyPressed() {
     for (let i = 0; i < 4; i++) {
       grid[i] = doSlide(grid[i])
     }
-    addNumber(grid)
+    checkCange(grid,gridClone) ? addNumber(grid) : console.log('nothing change');
   }
 
   // * arrow kiri
@@ -166,7 +181,7 @@ function keyPressed() {
     for (let i = 0; i < 4; i++) {
       grid[i] = doSlide(grid[i],'!kiri')
     }
-    addNumber(grid)
+    checkCange(grid,gridClone) ? addNumber(grid) : console.log('nothing change');
   }
 
   // * arrow bawah
@@ -216,8 +231,7 @@ function keyPressed() {
         grid[j][i] = gridTmp[i][j]
       }
     }
-
-    addNumber(grid)
+    checkCange(grid,gridClone) ? addNumber(grid) : console.log('nothing change');
   }
 
   // * arrow atas
@@ -268,14 +282,8 @@ function keyPressed() {
         grid[j][i] = gridTmp[i][j]
       }
     }
-    addNumber(grid)
+    checkCange(grid,gridClone) ? addNumber(grid) : console.log('nothing change');
+     //do nothing
   }
-
-  console.log(gridClone);
-  console.log(grid);
-  
-  
-
-
   // return false
 }
